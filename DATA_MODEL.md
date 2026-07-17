@@ -137,9 +137,29 @@ produto
   - categoria (text)
   - disponivel (boolean)
   - imagem_url (text, nullable)
+  - gerenciar_estoque (boolean) -- se deve decrementar automaticamente nas vendas
+  - quantidade_estoque (int)
+  - limite_alerta_estoque (int) -- limite para disparar alerta de estoque baixo
   - criado_em
   - atualizado_em
 ```
+
+---
+
+### Transação de Estoque
+```
+transacao_estoque
+  - id (PK, UUID)
+  - estabelecimento_id (FK)
+  - produto_id (FK → produto.id)
+  - quantidade_alterada (int) -- positivo para reposição, negativo para consumo/perda
+  - tipo (enum: venda, ajuste_manual, desperdicio, reabastecimento)
+  - justificativa (text, nullable)
+  - usuario_admin_id (FK → usuario_admin.id, nullable) -- quem realizou o ajuste manual
+  - criado_em
+```
+
+**Regra**: Toda alteração de estoque, seja dedução por venda ou reposição manual pelo gestor, gera uma linha de auditoria nesta tabela.
 
 ---
 

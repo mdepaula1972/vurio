@@ -243,5 +243,29 @@
 
 ---
 
+## D024 — Autenticação via Supabase Auth e Provedores Sociais
+
+- **Data**: 2026-07-17
+- **Motivo**: Substituir o Manus OAuth da plataforma de origem por uma solução nativa, segura e escalável do Supabase que suporta provedores sociais (Google, Facebook, Instagram, etc.).
+- **Impacto**:
+  - Tanto o painel administrativo (Dono) quanto possíveis autenticações futuras de clientes utilizarão o Supabase Auth.
+  - O fluxo de login social no admin redirecionará o usuário e salvará a sessão no JWT/Cookie seguro do Supabase Client.
+  - O cadastro básico de clientes via chatbot continuará não exigindo autenticação social pesada no primeiro acesso (apenas CPF/nome com consentimento LGPD), mas o login social poderá ser associado ao CPF posteriormente como camada de segurança.
+
+---
+
+## D025 — Módulo de Gestão de Estoque (Inventory Control)
+
+- **Data**: 2026-07-17
+- **Motivo**: O chatbot de IA e o menu do cliente precisam respeitar a disponibilidade real de produtos em estoque, evitando vendas de itens esgotados. O administrador precisa de controle gerencial e auditoria manual do fluxo de mercadorias.
+- **Impacto**:
+  - **Tabelas atualizadas**: `menuItems` ganha campos `trackStock` (boolean), `stockQuantity` (integer/decimal) e `lowStockThreshold` (integer).
+  - **Nova tabela**: `inventoryTransactions` para logar todas as entradas e saídas de estoque (venda automática, ajuste manual, desperdício/quebra, reabastecimento).
+  - **Redução Automática**: Ao confirmar um pedido (checkout), o estoque do item é deduzido automaticamente.
+  - **Inteligência do Chatbot**: O prompt da IA é alimentado em tempo real apenas com itens em estoque (`stockQuantity > 0` ou `trackStock = false`). O chatbot avisa o cliente se o item acabar durante a conversa.
+  - **Alertas de Estoque Baixo**: O painel administrativo receberá alertas em tempo real e notificações quando um produto atingir o `lowStockThreshold`.
+
+---
+
 *Última atualização: 2026-07-17*
 
