@@ -1,7 +1,7 @@
 # MVP.md — Produto Mínimo Viável
 
 > O MVP resolve exatamente **um** problema:
-> **O cliente consegue fazer um pedido completo sem precisar de garçom.**
+> **O pedido chega à cozinha de forma correta — seja pelo cliente direto no app ou pelo garçom lançando em nome do cliente.**
 
 ---
 
@@ -16,10 +16,17 @@
 - Realização de pedido
 - Acompanhamento do status do pedido
 
-**Para o estabelecimento**:
+**Para o estabelecimento (Modo Autônomo)**:
 - Painel Dono/Admin: configuração de cardápio, visualização de pedidos
-- Painel Cozinha/Bar: fila de preparo com atualização de status
-- Painel Corredor/Entregador: fila de entrega
+- Painel Cozinha/Bar: fila de preparo com atualização de status (+ alerta sonoro)
+- Painel Corredor/Entregador: fila de entrega com nome do cliente
+- Notificação via WhatsApp para dono/gerente a cada novo pedido
+
+**Para o estabelecimento (Modo Assistido — D011)**:
+- Garçom acessa painel do Corredor/Entregador
+- Busca cliente por nome ou CPF parcial para lançar pedido em seu nome
+- **CPF exibido sempre mascarado**: `***.***-XXX-**` — apenas dígitos centrais visíveis (D012)
+- Garçom confirma verbalmente com o cliente antes de lançar
 
 **Infraestrutura**:
 - Multi-tenant com isolamento por `estabelecimento_id`

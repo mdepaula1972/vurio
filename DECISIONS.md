@@ -103,4 +103,33 @@
 
 ---
 
+## D011 — Dois modos de operação: Autônomo e Assistido
+
+- **Data**: 2026-07-17
+- **Motivo**: Estabelecimentos têm perfis operacionais diferentes. Alguns vão eliminar o garçom completamente; outros vão manter o garçom, mas com função reduzida (entregador e relacionamento, não anotador). O produto precisa suportar ambos sem bifurcar o desenvolvimento.
+- **Impacto**:
+  - **Modo Autônomo**: cliente faz todo o pedido pelo app; staff prepara e entrega
+  - **Modo Assistido**: garçom pode lançar pedido pelo painel em nome de um cliente identificado por CPF; cliente pode ter pedido tanto pelo app quanto via garçom
+  - O cardápio, a cozinha, o histórico e a conta são **idênticos nos dois modos**
+  - O estabelecimento configura o modo preferido, podendo usar os dois simultaneamente
+  - Feature necessária: campo no painel do Corredor/Entregador para "Lançar pedido para cliente"
+- **Alternativas consideradas**: Produto exclusivamente autônomo (descartado: limita adoção por estabelecimentos com cultura de garçom forte)
+
+---
+
+## D012 — CPF mascarado para garçons no Modo Assistido (LGPD)
+
+- **Data**: 2026-07-17
+- **Motivo**: O garçom é um funcionário do estabelecimento, não um operador de dados autorizado a visualizar CPF completo. Pelo princípio da **necessidade mínima** (LGPD Art. 6º, inciso III), o garçom precisa apenas confirmar que está atendendo a pessoa certa — não precisa do CPF completo para isso.
+- **Impacto**:
+  - O painel do Corredor/Entregador **nunca exibe o CPF completo** de nenhum cliente
+  - Para identificação no Modo Assistido, o sistema exibe: **Nome completo + CPF parcialmente mascarado**
+  - Formato de exibição: `João Silva — ***.***-XXX-**` (apenas os 3 dígitos centrais visíveis)
+  - O garçom confirma verbalmente com o cliente os dígitos visíveis antes de lançar o pedido
+  - CPF completo fica acessível **apenas** ao Dono/Admin, e somente em relatórios com justificativa de acesso
+- **Regra permanente**: Nenhuma tela voltada a funcionários operacionais (cozinha, bar, corredor) exibe CPF completo. Jamais.
+- **Alternativas consideradas**: Exibir CPF completo para agilidade (descartado: viola LGPD e expõe o estabelecimento a risco legal)
+
+---
+
 *Última atualização: 2026-07-17*
