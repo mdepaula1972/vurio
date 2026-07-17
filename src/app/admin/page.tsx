@@ -53,6 +53,7 @@ export default function AdminDashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMenu, setIsLoadingMenu] = useState(false);
   const [authLoading, setAuthLoading] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(false);
 
   // 1. Escutar Estado de Autenticação do Supabase (D024)
   useEffect(() => {
@@ -145,13 +146,23 @@ export default function AdminDashboardPage() {
     e.preventDefault();
     setAuthLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email: emailInput,
-        password: passwordInput
-      });
-      if (error) throw error;
+      if (isSignUp) {
+        const { error } = await supabase.auth.signUp({
+          email: emailInput,
+          password: passwordInput
+        });
+        if (error) throw error;
+        alert("Conta de teste criada com sucesso! Você já pode realizar o login.");
+        setIsSignUp(false);
+      } else {
+        const { error } = await supabase.auth.signInWithPassword({
+          email: emailInput,
+          password: passwordInput
+        });
+        if (error) throw error;
+      }
     } catch (error: any) {
-      alert(error.message || "Erro ao realizar login.");
+      alert(error.message || "Erro ao realizar autenticação.");
     } finally {
       setAuthLoading(false);
     }
@@ -289,7 +300,9 @@ export default function AdminDashboardPage() {
         <Card className="w-full max-w-md p-8 shadow-xl bg-white border border-slate-200 rounded-2xl space-y-6">
           <div className="text-center space-y-2">
             <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Painel Vurio Admin</h1>
-            <p className="text-xs text-slate-500">Entre para gerenciar seu restaurante</p>
+            <p className="text-xs text-slate-500">
+              {isSignUp ? "Crie sua conta de administrador" : "Entre para gerenciar seu restaurante"}
+            </p>
           </div>
 
           <form onSubmit={handleLogin} className="space-y-4">
@@ -308,7 +321,7 @@ export default function AdminDashboardPage() {
               <Label className="text-xs font-semibold text-slate-700">Senha</Label>
               <Input
                 type="password"
-                placeholder="Sua senha secreta"
+                placeholder="Mínimo 6 caracteres"
                 value={passwordInput}
                 onChange={(e) => setPasswordInput(e.target.value)}
                 className="mt-1 text-sm bg-slate-50 border-slate-200 rounded-lg"
@@ -316,9 +329,24 @@ export default function AdminDashboardPage() {
             </div>
 
             <Button disabled={authLoading} className="w-full bg-slate-950 hover:bg-slate-900 text-white rounded-lg py-2">
-              {authLoading ? <Loader2 className="animate-spin h-4 w-4 mr-2" /> : "Entrar com Email"}
+              {authLoading ? (
+                <Loader2 className="animate-spin h-4 w-4 mr-2" />
+              ) : isSignUp ? (
+                "Criar Conta"
+              ) : (
+                "Entrar com Email"
+              )}
             </Button>
           </form>
+
+          <div className="text-center">
+            <button
+              onClick={() => setIsSignUp(!isSignUp)}
+              className="text-xs font-semibold text-slate-600 hover:text-slate-800 underline"
+            >
+              {isSignUp ? "Já possui cadastro? Faça o Login" : "Não tem uma conta? Cadastre-se gratuitamente"}
+            </button>
+          </div>
 
           <div className="relative flex items-center justify-center my-4">
             <span className="absolute px-3 bg-white text-[10px] uppercase font-bold text-slate-400">Ou entre com</span>
