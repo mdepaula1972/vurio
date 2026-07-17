@@ -132,4 +132,116 @@
 
 ---
 
+## D013 — Políticas de Privacidade e Termos de Uso (LGPD) em Produção vs. Testes
+
+- **Data**: 2026-07-17
+- **Motivo**: A coleta de CPF exige amparo legal. Para testes internos conduzidos pelo fundador e pessoas próximas, o termo pode ser flexibilizado ou dispensado temporariamente. Contudo, em produção e para o mercado externo, o sistema não aceitará nenhum cadastro sem a concordância explícita da Política de Privacidade e Termos de Uso.
+- **Impacto**:
+  - Em ambiente de testes (dev/staging local), o fluxo do chatbot pode bypassar o consentimento explícito se configurado em env flags.
+  - Para produção, o checkout/cadastro de cliente é bloqueado até que o checkbox/opt-in de termos de uso e política de privacidade esteja gravado.
+
+---
+
+## D014 — Validação Matemática de CPF
+
+- **Data**: 2026-07-17
+- **Motivo**: Prevenir cadastros com CPFs falsos que poluiriam o histórico de clientes e o multi-tenant.
+- **Impacto**:
+  - Implementação de validador matemático de CPF baseado em módulo 11 (dígitos verificadores) tanto no frontend (chatbot web) quanto nas validações de schema/serviço no backend.
+  - O sistema retornará erro explícito informando CPF inválido caso o cálculo matemático falhe.
+
+---
+
+## D015 — Controle de Acesso por PIN para Cozinha/Bar/Corredor
+
+- **Data**: 2026-07-17
+- **Motivo**: Evitar vazamento de informações operacionais e manipulação indevida de pedidos. O acesso via URL com slug é aceito temporariamente apenas em desenvolvimento/testes internos.
+- **Impacto**:
+  - Telas de Cozinha, Bar e Corredor exigirão um PIN numérico rápido de 4 dígitos configurado pelo Admin/Dono para cada função.
+  - Sessão de login expira após período configurado de inatividade.
+
+---
+
+## D016 — Bloqueio de Funcionários sem Exclusão do Histórico
+
+- **Data**: 2026-07-17
+- **Motivo**: Caso um funcionário seja demitido ou afastado, o sistema precisa bloquear seu acesso imediatamente sem excluir seu cadastro (possibilitando recontratação futura ou auditoria de quem entregou o quê).
+- **Impacto**:
+  - Adicionado o status `bloqueado` ou flag `ativo (false)` na entidade de usuários administrativos.
+  - O bloqueio impede a geração de novos tokens de sessão. O histórico de entregas/preparos vinculados ao usuário administrativo permanece intacto para fins de relatórios do Dono.
+
+---
+
+## D017 — Prevenção de Pedidos Fora do Horário (Abertura e Fechamento de Turno)
+
+- **Data**: 2026-07-17
+- **Motivo**: Evitar pedidos falsos enviados remotamente quando o estabelecimento está fechado.
+- **Impacto**:
+  - O Dono/Admin gerencia a abertura e o fechamento do turno/expediente através do painel.
+  - Quando fechado, o QR Code de mesas do restaurante redirecionará para uma página estática informando que o estabelecimento está fechado e o chatbot não registrará novos pedidos.
+
+---
+
+## D018 — Validação de Preço de Itens no Fechamento do Pedido
+
+- **Data**: 2026-07-17
+- **Motivo**: Conforme o Código de Defesa do Consumidor brasileiro, o valor que conta é o do fechamento/confirmação. Se o estabelecimento mudar o preço no admin enquanto o cliente está montando o carrinho, o preço de quando o cliente enviou o pedido deve prevalecer.
+- **Impacto**:
+  - O carrinho carrega a referência do produto.
+  - No momento em que a API de criação de pedido é disparada, o preço unitário do item é gravado permanentemente na tabela `orderItems`, persistindo aquele valor histórico independente de atualizações subsequentes na tabela `menuItems`.
+
+---
+
+## D019 — Proteção contra Spam/Flood de Pedidos
+
+- **Data**: 2026-07-17
+- **Motivo**: Evitar ataques maliciosos de negação de serviço ou spam de pedidos na cozinha.
+- **Impacto**:
+  - Implementação de limites de requisição baseados em IP e CPF (máximo de 5 pedidos a cada 10 minutos por CPF ativo no mesmo estabelecimento, ajustável pelo Admin).
+  - Rate limiting ativo nas rotas do chatbot e criação de pedidos.
+
+---
+
+## D020 — Retenção de Dados: 5 Anos Fiscal e 180 Dias Chat
+
+- **Data**: 2026-07-17
+- **Motivo**: Cumprimento das obrigações fiscais brasileiras de manter histórico de transações por 5 anos, equilibrado com a privacidade do usuário (minimizando o armazenamento das mensagens brutas de chat).
+- **Impacto**:
+  - Histórico de pedidos, clientes e financeiros é mantido no banco de dados operacional por 5 anos.
+  - Mensagens brutas do chat da sessão (`chatMessages` e transcrições) serão excluídas automaticamente por um job cron em D+180 após a sessão ser encerrada.
+
+---
+
+## D021 — Confirmação de Maioridade para Itens Restritos
+
+- **Data**: 2026-07-17
+- **Motivo**: Impedir legalmente a venda de álcool a menores de 18 anos.
+- **Impacto**:
+  - Itens de menu com categoria de álcool possuem flag `ageRestricted`.
+  - Ao pedir um item com essa restrição pela primeira vez, o chatbot exige do cliente a confirmação explícita de maioridade. Isso é gravado com timestamp no histórico do cliente.
+  - O garçom/entregador receberá um alerta visual no painel para realizar a verificação de documento físico na entrega.
+
+---
+
+## D022 — Estratégia de WhatsApp API: Não-Oficial para Testes, Oficial da Meta para Produção
+
+- **Data**: 2026-07-17
+- **Motivo**: Rapidez e facilidade nos testes iniciais, mas garantia de estabilidade e compliance da Meta para estabelecimentos reais em produção através de parceria comercial já existente na empresa do fundador.
+- **Impacto**:
+  - Usaremos API não-oficial nos testes de desenvolvimento.
+  - O plano de homologação do primeiro bar piloto prevê a configuração de um número oficial na Meta Cloud API.
+
+---
+
+## D023 — Redundância de Internet e Cache Local
+
+- **Data**: 2026-07-17
+- **Motivo**: Minimizar impacto de instabilidade de rede local do restaurante.
+- **Impacto**:
+  - O estabelecimento é orientado a ter conexão secundária.
+  - O frontend do cardápio utilizará Service Workers para cachear as imagens, informações de itens e dados estáticos locais, garantindo que o cardápio abra mesmo sob internet oscilante.
+
+---
+
 *Última atualização: 2026-07-17*
+
