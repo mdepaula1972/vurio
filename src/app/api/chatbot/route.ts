@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
-import { openai } from "@/lib/openai";
+import { geminiModel } from "@/lib/gemini";
+import { SchemaType } from "@google/generative-ai";
 
 interface ExtractedData {
   cpf?: string | null;
@@ -47,7 +48,6 @@ export async function POST(request: Request) {
     });
 
     // 3. Obter produtos disponíveis (Módulo de Estoque - D025)
-    // Buscamos produtos ativos e cujo estoque não esteja esgotado
     const { data: products } = await supabaseAdmin
       .from("produtos")
       .select("*")
@@ -88,55 +88,66 @@ Instruções Operacionais:
 4. Quando o cliente decidir finalizar, liste os itens e quantidades e peça confirmação explícita.
 5. Se ele mudar de mesa, anote o novo número.`;
 
-    const messagesForOpenAI = [
-      { role: "system" as const, content: systemPrompt },
-      ...(history || []).map((h) => ({
-        role: h.role as "user" | "assistant" | "system",
-        content: h.conteudo,
-      })),
-    ];
-
-    // Chamar LLM para gerar resposta conversacional
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: messagesForOpenAI,
+    // 6. Configurar conversa usando o SDK do Gemini (gemini-2.5-flash)
+    const chat = geminiModel.startChat({
+      history: (history || [])
+        .filter((h) => h.role === "user" || h.role === "assistant")
+        .map((h) => ({
+          role: h.role === "assistant" ? ("model" as const) : ("user" as const),
+          parts: [{ text: h.conteudo }],
+        })),
+      systemInstruction: systemPrompt,
     });
 
-    let botResponse = completion.choices[0].message.content || "";
+    const result = await chat.sendMessage(userMessage);
+    let botResponse = result.response.text() || "";
 
-    // 6. Extração de Dados Estruturados em JSON
-    const extractionPrompt = `Analise a mensagem do usuário e extraia os dados abaixo no formato JSON.
-Se o cliente estiver confirmando o pedido de forma definitiva, liste os itens.
+    // 7. Extração de Dados Estruturados usando JSON Schema Nativo do Gemini
+    const extractionPrompt = `Analise a mensagem do usuário e extraia os dados estruturados do pedido e contexto.
 
-Cardápio de Referência (IDs válidos):
+Cardápio de Referência (IDs válidos de produtos):
 ${JSON.stringify(availableProducts.map((p) => ({ id: p.id, nome: p.nome })))}
 
-Mensagem do usuário: "${userMessage}"
+Mensagem do usuário: "${userMessage}"`;
 
-JSON de retorno esperado:
-{
-  "cpf": string contendo apenas 11 dígitos ou null,
-  "name": string com nome ou null,
-  "tableNumber": string com número da mesa ou null,
-  "orderItems": array de { "produtoId": string, "quantidade": number, "instrucoesEspeciais": string } ou null,
-  "orderConfirmed": boolean (true se confirmou fechamento do pedido)
-}`;
-
-    const extractionCompletion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      response_format: { type: "json_object" },
-      messages: [{ role: "user", content: extractionPrompt }],
+    const extractionResult = await geminiModel.generateContent({
+      contents: [{ role: "user", parts: [{ text: extractionPrompt }] }],
+      generationConfig: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: SchemaType.OBJECT,
+          properties: {
+            cpf: { type: SchemaType.STRING, description: "CPF contendo apenas 11 dígitos ou null" },
+            name: { type: SchemaType.STRING, description: "Nome do cliente ou null" },
+            tableNumber: { type: SchemaType.STRING, description: "Número da mesa ou null" },
+            orderItems: {
+              type: SchemaType.ARRAY,
+              description: "Itens a pedir",
+              items: {
+                type: SchemaType.OBJECT,
+                properties: {
+                  produtoId: { type: SchemaType.STRING, description: "ID do produto" },
+                  quantidade: { type: SchemaType.INTEGER, description: "Quantidade" },
+                  instrucoesEspeciais: { type: SchemaType.STRING, description: "Observações especiais" }
+                },
+                required: ["produtoId", "quantidade"]
+              }
+            },
+            orderConfirmed: { type: SchemaType.BOOLEAN, description: "true se confirmou fechamento do pedido" }
+          }
+        }
+      }
     });
 
-    const extractedText = extractionCompletion.choices[0].message.content || "{}";
+    const extractedText = extractionResult.response.text() || "{}";
     let extracted: ExtractedData = {};
     try {
       extracted = JSON.parse(extractedText);
     } catch (e) {
-      console.error("[Chatbot] JSON extraction parsing failed");
+      console.error("[Chatbot] JSON extraction parsing failed:", e);
     }
 
-    // 7. Atualizar sessão com mesa ou CPF se extraídos
+    // 8. Atualizar sessão com mesa ou CPF se extraídos
     const updates: Record<string, any> = {};
     if (extracted.tableNumber) {
       updates.numero_mesa = extracted.tableNumber;
@@ -156,13 +167,12 @@ JSON de retorno esperado:
         .eq("id", sessionId);
     }
 
-    // 8. Se o pedido foi confirmado, criar o pedido no banco
+    // 9. Se o pedido foi confirmado, criar o pedido no banco
     if (extracted.orderConfirmed && extracted.orderItems && extracted.orderItems.length > 0) {
       const activeCpf = session.cliente_cpf || updates.cliente_cpf;
       const activeMesa = session.numero_mesa || extracted.tableNumber;
 
       if (!activeCpf) {
-        // Se tentou pedir sem se identificar, avisa que precisa de identificação
         botResponse = "Ah, antes de mandar seu pedido para a cozinha, preciso que você confirme seu nome e CPF no formulário ali embaixo. É rapidinho!";
       } else {
         // Obter ou criar sessão de mesa (D005 / D011)
