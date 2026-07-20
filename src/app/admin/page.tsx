@@ -54,6 +54,8 @@ export default function AdminDashboardPage() {
   const [isLoadingMenu, setIsLoadingMenu] = useState(false);
   const [authLoading, setAuthLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
+  const [authErrorMessage, setAuthErrorMessage] = useState<string | null>(null);
+  const [authSuccessMessage, setAuthSuccessMessage] = useState<string | null>(null);
 
   // 1. Escutar Estado de Autenticação do Supabase (D024)
   useEffect(() => {
@@ -145,14 +147,17 @@ export default function AdminDashboardPage() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setAuthLoading(true);
+    setAuthErrorMessage(null);
+    setAuthSuccessMessage(null);
+
     try {
       if (isSignUp) {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email: emailInput,
           password: passwordInput
         });
         if (error) throw error;
-        alert("Conta de teste criada com sucesso! Você já pode realizar o login.");
+        setAuthSuccessMessage("Conta de teste criada com sucesso! Agora clique em 'Entrar com Email'.");
         setIsSignUp(false);
       } else {
         const { error } = await supabase.auth.signInWithPassword({
@@ -162,7 +167,14 @@ export default function AdminDashboardPage() {
         if (error) throw error;
       }
     } catch (error: any) {
-      alert(error.message || "Erro ao realizar autenticação.");
+      console.error("[Auth Error]:", error);
+      let msg = error.message || "Erro na autenticação.";
+      if (msg.includes("Invalid login credentials")) {
+        msg = "Credenciais inválidas. Se você ainda não criou uma conta com este email, clique no link abaixo para se Cadastrar.";
+      } else if (msg.includes("rate limit")) {
+        msg = "Limite de cadastros por hora atingido no Supabase. Tente novamente em alguns minutos ou use um email existente.";
+      }
+      setAuthErrorMessage(msg);
     } finally {
       setAuthLoading(false);
     }
@@ -304,6 +316,18 @@ export default function AdminDashboardPage() {
               {isSignUp ? "Crie sua conta de administrador" : "Entre para gerenciar seu restaurante"}
             </p>
           </div>
+
+          {authErrorMessage && (
+            <div className="bg-red-50 border border-red-200 text-red-700 text-xs p-3 rounded-lg leading-relaxed">
+              ⚠️ {authErrorMessage}
+            </div>
+          )}
+
+          {authSuccessMessage && (
+            <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs p-3 rounded-lg leading-relaxed font-medium">
+              ✅ {authSuccessMessage}
+            </div>
+          )}
 
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
