@@ -2,6 +2,10 @@
 
 Todas as alterações relevantes do projeto são registradas neste arquivo.
 
+## [v1.0.2] - 2026-07-20
+### Alterado
+- **Vinculação de Variáveis de Ambiente em Produção**: Atualizado o bundle estático do cliente para carregar a URL real do Supabase (`NEXT_PUBLIC_SUPABASE_URL`) e `NEXT_PUBLIC_SUPABASE_ANON_KEY` configurados no painel de Environment Variables da Vercel.
+
 ## [v1.0.1] - 2026-07-20
 ### Adicionado
 - **D026 — Versionamento Visível Obrigatório**: Criado o modulo `src/lib/version.ts` e inseridos badges de versão visíveis no rodapé/cabeçalho de todas as telas (`/admin`, `/chat`, `/kitchen` e `/`).
