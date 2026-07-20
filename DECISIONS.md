@@ -267,5 +267,16 @@
 
 ---
 
-*Última atualização: 2026-07-17*
+## D026 — Versionamento Visível Obrigatório nas Interfaces
+
+- **Data**: 2026-07-20
+- **Motivo**: Permitir que o fundador e a equipe validem visualmente e de forma inequívoca que o navegador está exibindo a versão mais recente do código e das correções aplicadas, eliminando dúvidas causadas por cache de navegador ou devserver.
+- **Impacto**:
+  - Arquivo `src/lib/version.ts` criado contendo `APP_VERSION` e `LAST_UPDATED`.
+  - Exibição visual da versão no rodapé do cartão de login do Admin (`/admin`), no header da Cozinha (`/kitchen`), no Chatbot (`/chat`) e na Landing Page (`/`).
+  - Regra obrigatória: Toda nova alteração no projeto DEVE atualizar a versão e a data/hora em `src/lib/version.ts`.
+
+---
+
+*Última atualização: 2026-07-20*
 

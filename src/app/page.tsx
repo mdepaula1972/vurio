@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { QrCode, MessageSquare, Utensils, Shield, CheckCircle } from "lucide-react";
+import { APP_VERSION } from "@/lib/version";
 
 export default function Home() {
   return (
@@ -10,6 +11,9 @@ export default function Home() {
           <div className="flex items-center gap-2">
             <div className="h-8 w-8 bg-slate-950 rounded-xl flex items-center justify-center text-white font-black text-lg">V</div>
             <span className="text-xl font-bold tracking-tight text-slate-900">Vurio</span>
+            <span className="ml-2 text-[10px] font-mono bg-slate-100 text-slate-600 px-2 py-0.5 rounded border border-slate-200">
+              {APP_VERSION}
+            </span>
           </div>
           <div className="flex items-center gap-4">
             <Link href="/admin">

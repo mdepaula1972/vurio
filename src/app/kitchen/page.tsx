@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/lib/supabase";
+import { APP_VERSION } from "@/lib/version";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -309,7 +310,12 @@ export default function KitchenDisplayPage() {
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-800 pb-6">
           <div>
-            <h1 className="text-3xl font-extrabold tracking-tight text-white">Painel de Preparo (Cozinha & Bar)</h1>
+            <div className="flex items-center gap-3">
+              <h1 className="text-3xl font-extrabold tracking-tight text-white">Painel de Preparo (Cozinha & Bar)</h1>
+              <span className="text-xs bg-slate-900 text-slate-400 font-mono px-2.5 py-1 rounded border border-slate-800">
+                {APP_VERSION}
+              </span>
+            </div>
             <p className="text-xs text-slate-400 mt-2">Monitore e atualize o status dos pedidos em tempo real</p>
           </div>
           <Button onClick={playNewOrderChime} variant="outline" className="border-slate-800 hover:bg-slate-900 text-slate-400 gap-2">

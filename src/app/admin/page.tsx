@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { APP_VERSION, LAST_UPDATED } from "@/lib/version";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -384,6 +385,12 @@ export default function AdminDashboardPage() {
             <Button variant="outline" onClick={() => handleOAuthLogin('facebook')} className="border-slate-200 rounded-lg text-slate-700">
               Facebook
             </Button>
+          </div>
+
+          <div className="pt-4 border-t border-slate-100 text-center">
+            <span className="inline-block bg-slate-100 text-slate-600 text-[11px] font-mono font-medium px-2.5 py-1 rounded-md">
+              Vurio System {APP_VERSION} — Atualizado: {LAST_UPDATED}
+            </span>
           </div>
         </Card>
       </div>

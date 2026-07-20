@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabase";
+import { APP_VERSION } from "@/lib/version";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -249,12 +250,17 @@ export default function ChatBotPage() {
     <div className="flex flex-col h-screen bg-slate-50">
       {/* Header */}
       <div className="bg-white border-b border-slate-200 shadow-sm p-4 sticky top-0 z-10">
-        <div className="max-w-2xl mx-auto flex items-center gap-3">
-          <div className="h-3 w-3 bg-emerald-500 rounded-full animate-pulse" />
-          <div>
-            <h1 className="text-lg font-semibold text-slate-900 leading-none">Garçom Digital Vurio</h1>
-            <p className="text-xs text-slate-500 mt-1">Conectado em tempo real</p>
+        <div className="max-w-2xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="h-3 w-3 bg-emerald-500 rounded-full animate-pulse" />
+            <div>
+              <h1 className="text-lg font-semibold text-slate-900 leading-none">Garçom Digital Vurio</h1>
+              <p className="text-xs text-slate-500 mt-1">Conectado em tempo real</p>
+            </div>
           </div>
+          <span className="text-[10px] bg-slate-100 text-slate-600 font-mono px-2 py-0.5 rounded border border-slate-200">
+            {APP_VERSION}
+          </span>
         </div>
       </div>
 
